@@ -61,6 +61,59 @@ prompt_git() {
 	fi;
 }
 
+noise_for_production() {
+	if [ $1 == 'production' ]; then
+		echo -e '==> PRODUCTION <==';
+	else
+		echo -e $1;
+	fi;
+}
+
+prompt_terraform() {
+	local workspaceName='';
+
+	# Check if .terraform directory exists
+	if [ -d ".terraform" ]; then
+		workspaceName="$(terraform workspace show)";
+
+		workspaceName2="$(noise_for_production $workspaceName)";
+
+		echo -e " ${1}[terraform: ${2}${workspaceName2}${1}]";
+	else
+		return;
+	fi;
+}
+
+prompt_gcloud() {
+	local configName='';
+
+	# Check if gcloud is installed
+	if [ $(which gcloud &>/dev/null; echo "${?}") == '0' ]; then
+		configName="$(cat ~/.config/gcloud/active_config)";
+
+		configName="$(noise_for_production $configName)";
+
+		echo -e " ${1}[gcloud: ${2}${configName}${1}]";
+	else
+		return;
+	fi;
+}
+
+prompt_k8s() {
+	local contextName='';
+
+	# Check if kubectl is installed
+	if [ $(which kubectl &>/dev/null; echo "${?}") == '0' ]; then
+		contextName="$(kubectl config view | grep current-context | awk '{print $2;}')";
+
+		contextName=$(noise_for_production $contextName);
+
+		echo -e " ${1}[k8s: ${2}${contextName}${1}]";
+	else
+		return;
+	fi;
+}
+
 if tput setaf 1 &> /dev/null; then
 	tput sgr0; # reset colors
 	bold=$(tput bold);
@@ -114,6 +167,9 @@ PS1+="\[${hostStyle}\]\h"; # host
 PS1+="\[${white}\] in ";
 PS1+="\[${green}\]\w"; # working directory full path
 PS1+="\$(prompt_git \"\[${white}\] on \[${violet}\]\" \"\[${blue}\]\")"; # Git repository details
+PS1+="\$(prompt_k8s \"\[${orange}\]\" \"\[${cyan}\]\")"; # k8s details
+PS1+="\$(prompt_gcloud \"\[${yellow}\]\" \"\[${cyan}\]\")"; # gcloud details
+PS1+="\$(prompt_terraform \"\[${bold}${red}\]\" \"\[${bold}${cyan}\]\")"; # terraform details
 PS1+="\n";
 PS1+="\[${white}\]\$ \[${reset}\]"; # `$` (and reset color)
 export PS1;
