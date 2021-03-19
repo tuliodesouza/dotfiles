@@ -104,7 +104,7 @@ prompt_k8s() {
 
 	# Check if kubectl is installed
 	if [ $(which kubectl &>/dev/null; echo "${?}") == '0' ]; then
-		contextName="$(kubectl config view | grep current-context | awk '{print $2;}')";
+		contextName="$(kubectl config current-context)";
 
 		contextName=$(noise_for_production $contextName);
 
